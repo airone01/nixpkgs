@@ -1,0 +1,26 @@
+--- a/configure.sh
++++ b/configure.sh
+@@ -137,20 +137,9 @@
+     CONTAINER_MOUNT_OPTS=:Z
+   fi
+ 
+-  if [[ -n "$arg_container_engine" ]]; then
+-    check_container_engine "$arg_container_engine" "$steamrt_image" || die "Specified container engine \"$arg_container_engine\" doesn't work"
+-  else
+-    stat "Trying to find usable container engine."
+-    if check_container_engine docker "$steamrt_image"; then
+-      arg_container_engine="docker"
+-    elif check_container_engine podman "$steamrt_image"; then
+-      arg_container_engine="podman"
+-    else
+-        die "${arg_container_engine:-Container engine discovery} has failed. Please fix your setup."
+-    fi
+-  fi
+-
+-  stat "Using $arg_container_engine."
++  stat "Bypassed check_container_engine."
++  arg_container_engine="fake-container-engine"
++  ROOTLESS_CONTAINER=1
+ 
+   ## Write out config
+   # Don't die after this point or we'll have rather unhelpfully deleted the Makefile
