@@ -30,6 +30,14 @@
   pcre2,
   libffi,
   util-linux,
+  libGL,
+  libxcb,
+  mesa,
+  wayland,
+  wayland-scanner,
+  libogg,
+  libopus,
+  libtheora,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "proton-ge-src";
@@ -47,6 +55,8 @@ stdenv.mkDerivation (finalAttrs: {
     ./bypass-container.patch
   ];
 
+  # gcc 10.3.0
+  # ld 2.42
   nativeBuildInputs = [
     bison
     flex
@@ -61,6 +71,7 @@ stdenv.mkDerivation (finalAttrs: {
     rustc
     cargo
     rsync
+    wayland-scanner
     pkgsCross.mingwW64.stdenv.cc
     pkgsCross.mingw32.stdenv.cc
     pkgsCross.gnu32.stdenv.cc
@@ -88,12 +99,30 @@ stdenv.mkDerivation (finalAttrs: {
 
     # Sniper SDK is Debian-based. Valve's Meson script hardcodes search the binaries.
     # These masks fake the binaries.
-    (writeShellScriptBin "i686-linux-gnu-gcc" ''exec i686-unknown-linux-gnu-gcc -std=gnu17 "$@"'')
-    (writeShellScriptBin "i686-linux-gnu-g++" ''exec i686-unknown-linux-gnu-g++ "$@"'')
-    (writeShellScriptBin "i686-linux-gnu-ar" ''exec i686-unknown-linux-gnu-ar "$@"'')
-    (writeShellScriptBin "x86_64-linux-gnu-gcc" ''exec gcc -m64 -std=gnu17 "$@"'')
+    (writeShellScriptBin "x86_64-linux-gnu-gcc" ''exec gcc -m64 -std=gnu17 -Wno-error=incompatible-pointer-types "$@"'')
     (writeShellScriptBin "x86_64-linux-gnu-g++" ''exec g++ -m64 "$@"'')
     (writeShellScriptBin "x86_64-linux-gnu-ar" ''exec ar "$@"'')
+    (writeShellScriptBin "i686-linux-gnu-gcc" ''exec i686-unknown-linux-gnu-gcc -std=gnu17 -Wno-error=incompatible-pointer-types -L${pkgsi686Linux.zlib}/lib "$@"'')
+    (writeShellScriptBin "i686-linux-gnu-g++" ''exec i686-unknown-linux-gnu-g++ -L${pkgsi686Linux.zlib}/lib "$@"'')
+    (writeShellScriptBin "i686-linux-gnu-ar" ''exec i686-unknown-linux-gnu-ar "$@"'')
+
+    # (writeShellScriptBin "i686-linux-gnu-pkg-config" ''exec i686-unknown-linux-gnu-pkg-config "$@"'')
+    # (writeShellScriptBin "x86_64-linux-gnu-pkg-config" ''exec pkg-config "$@"'')
+
+    (writeShellScriptBin "x86_64-linux-gnu-pkg-config" ''
+      unset PKG_CONFIG_LIBDIR
+      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$NIX_ORIG_PKG_CONFIG_PATH"
+      # fixes Valve's build system calling the wrong pkg-config by error
+      if [[ "$PWD" == *-i386* ]]; then
+        exec i686-unknown-linux-gnu-pkg-config "$@"
+      fi
+      exec pkg-config "$@"
+    '')
+    (writeShellScriptBin "i686-linux-gnu-pkg-config" ''
+      unset PKG_CONFIG_LIBDIR
+      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$NIX_ORIG_PKG_CONFIG_PATH"
+      exec i686-unknown-linux-gnu-pkg-config "$@"
+    '')
 
     # (writeShellScriptBin "i686-linux-gnu-pkg-config" ''
     #   unset PKG_CONFIG_LIBDIR
@@ -107,17 +136,6 @@ stdenv.mkDerivation (finalAttrs: {
     #
     #   exec pkg-config "$@"
     # '')
-
-    (writeShellScriptBin "i686-linux-gnu-pkg-config" ''
-      unset PKG_CONFIG_LIBDIR
-      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$NIX_ORIG_PKG_CONFIG_PATH"
-      exec i686-unknown-linux-gnu-pkg-config "$@"
-    '')
-    (writeShellScriptBin "x86_64-linux-gnu-pkg-config" ''
-      unset PKG_CONFIG_LIBDIR
-      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$NIX_ORIG_PKG_CONFIG_PATH"
-      exec pkg-config "$@"
-    '')
 
     # Note: the following masks might not be needed anymore. They're kept as a backup plan.
     # # Having both 32-bit and 64-bit versions of glib in buildInputs causes crossover linking errors.
@@ -138,7 +156,6 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   buildInputs = [
-    # 64-bit libs
     vulkan-headers
     vulkan-loader
     freetype
@@ -152,8 +169,14 @@ stdenv.mkDerivation (finalAttrs: {
     pcre2
     libffi
     util-linux
+    libGL
+    wayland
+    mesa
+    libxcb
+    libogg
+    libopus
+    libtheora
 
-    # 32-bit libs
     pkgsi686Linux.vulkan-loader
     pkgsi686Linux.freetype
     pkgsi686Linux.zlib
@@ -166,6 +189,7 @@ stdenv.mkDerivation (finalAttrs: {
     pkgsi686Linux.pcre2
     pkgsi686Linux.libffi
     pkgsi686Linux.util-linux
+    pkgsi686Linux.libGL
   ];
 
   makeFlags = [
