@@ -1,0 +1,35 @@
+From 21bf16283ef0570b8123033ca596b5fe5b8e46bf Mon Sep 17 00:00:00 2001
+From: airone01 <airone01@proton.me>
+Date: Wed, 14 Oct 2026 13:27:19 +0200
+Subject: [PATCH] fix({auth,input}-helper): disable setuid bit install
+
+---
+ plugins/platform/linux/auth-helper/CMakeLists.txt  | 2 +-
+ plugins/platform/linux/input-helper/CMakeLists.txt | 4 +---
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/plugins/platform/linux/auth-helper/CMakeLists.txt b/plugins/platform/linux/auth-helper/CMakeLists.txt
+index c18b71a4a..4a3934ac4 100644
+--- a/plugins/platform/linux/auth-helper/CMakeLists.txt
++++ b/plugins/platform/linux/auth-helper/CMakeLists.txt
+@@ -7,4 +7,4 @@ set_default_target_properties(veyon-auth-helper)
+ target_include_directories(veyon-auth-helper PRIVATE ${PAM_INCLUDE_DIR})
+ target_link_libraries(veyon-auth-helper PRIVATE veyon-core ${PAM_LIBRARY})
+ 
+-install(TARGETS veyon-auth-helper RUNTIME DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE SETUID GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
++install(TARGETS veyon-auth-helper RUNTIME DESTINATION bin)
+diff --git a/plugins/platform/linux/input-helper/CMakeLists.txt b/plugins/platform/linux/input-helper/CMakeLists.txt
+index be7cda098..35a49c8b0 100644
+--- a/plugins/platform/linux/input-helper/CMakeLists.txt
++++ b/plugins/platform/linux/input-helper/CMakeLists.txt
+@@ -7,6 +7,4 @@ set_target_properties(veyon-input-helper PROPERTIES
+ 	C_STANDARD_REQUIRED ON
+ )
+ 
+-install(TARGETS veyon-input-helper RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE SETUID
+-	GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
++install(TARGETS veyon-auth-helper RUNTIME DESTINATION bin)
+-- 
+2.55.0
+
